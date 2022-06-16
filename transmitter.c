@@ -2,9 +2,9 @@
 #include "packet.h"
 
 #include <string.h>
+#include <stdint.h>
 
 #include "stm32f0xx.h"
-
 
 typedef struct
 {
@@ -12,41 +12,57 @@ typedef struct
 	unsigned char request[PACKET_MAX_SIZE + 1];
 } Transmitter;
 
+#define TRM_REQUEST_HEADER(trm) ((trm)->request[0])
+#define TRM_REQUEST_BODY(trm) ((trm)->request + 1)
+
 static Transmitter g_transmitter = { 0 };
 
-static void TrmpWaitForTransferComplete(void)
+static int TrmpCompareExchangeFlag(volatile uint8_t* flag, uint8_t expected, uint8_t desired)
 {
-	while (g_transmitter.active_transfer);
+	uint8_t value;
+
+	__disable_irq();
+	value = *flag;
+	if (value == expected)
+	{
+		*flag = desired;
+	}
+	__enable_irq();
+	return value;
 }
 
-static void TrmpStartTransfer(void)
+static void TrmpRestartTransfer(void)
 {
-	g_transmitter.active_transfer = 1;
+	for (;;)
+	{
+		while (g_transmitter.active_transfer != 0)
+			;
+		if (TrmpCompareExchangeFlag(&g_transmitter.active_transfer, 0, 1) == 0)
+		{
+			break;
+		}
+	}
 }
 
 static void TrmpFinalizeTransfer(void)
 {
-	g_transmitter.active_transfer = 0;
 	DMA1_Channel2->CCR &= ~DMA_CCR_EN;
+	g_transmitter.active_transfer = 0;
 }
 
-static void TrmpDmaSend(const void* buffer, uint16_t bytes_count)
+static void TrmpDmaRequest(uint16_t bytes_count)
 {
-	DMA1_Channel2->CMAR = (uint32_t)buffer;
-	DMA1_Channel2->CNDTR = bytes_count;
-	DMA1_Channel2->CCR |= DMA_CCR_EN;
+	DMA1_Channel2->CNDTR = bytes_count + 1u;  // + size of packet header
+ 	DMA1_Channel2->CCR |= DMA_CCR_EN;
 }
 
 static void TrmpSendDataChunk(const void* buffer, uint16_t bytes_count)
 {
 	// bytes_count <= PACKET_MAX_SIZE
-
-	TrmpWaitForTransferComplete();
-	g_transmitter.request[0] = (unsigned char)PACKET_HEADER(PACKET_TYPE_DATA, bytes_count);
-	memcpy(g_transmitter.request + 1, buffer, bytes_count);
-
-	TrmpStartTransfer();
-	TrmpDmaSend(buffer, bytes_count);
+	TrmpRestartTransfer();
+	TRM_REQUEST_HEADER(&g_transmitter) = (unsigned char)PACKET_HEADER(PACKET_TYPE_DATA, bytes_count);
+	memcpy(TRM_REQUEST_BODY(&g_transmitter), buffer, bytes_count);
+	TrmpDmaRequest(bytes_count);
 }
 
 void TrmInit(void)
@@ -61,6 +77,8 @@ void TrmInit(void)
 	DMA1_Channel2->CCR |= DMA_CCR_MINC | DMA_CCR_DIR |
 		DMA_CCR_TEIE | DMA_CCR_TCIE; // Transfer Error & Complete interrupts
 	DMA1_Channel2->CPAR = (uint32_t)&USART1->TDR;
+	DMA1_Channel2->CMAR = (uint32_t)g_transmitter.request;
+	
 	NVIC_SetPriority(DMA1_Channel2_3_IRQn, 1);
 	NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
 
@@ -86,12 +104,10 @@ void TrmSendData(const void* buffer, uint16_t bytes_count)
 
 void TrmSendCommand(uint8_t command)
 {
-	TrmpWaitForTransferComplete();
-	g_transmitter.request[0] = (unsigned char)PACKET_HEADER(PACKET_TYPE_COMMAND, 1);
-	g_transmitter.request[1] = command;
-
-	TrmpStartTransfer();
-	TrmpDmaSend(g_transmitter.request, 2);
+	TrmpRestartTransfer();
+	TRM_REQUEST_HEADER(&g_transmitter) = (unsigned char)PACKET_HEADER(PACKET_TYPE_COMMAND, 1);
+	*TRM_REQUEST_BODY(&g_transmitter) = command;
+	TrmpDmaRequest(1);
 }
 
 void DMA1_Ch2_3_DMA2_Ch1_2_IRQHandler(void)

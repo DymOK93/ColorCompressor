@@ -1,6 +1,8 @@
 #pragma once
 #include <stdint.h>
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 typedef struct
 {
 	unsigned char* storage;
@@ -11,8 +13,10 @@ typedef struct
 } CircularBuffer;
 
 #define CB_SIZE(cb) ((cb)->size)
-#define CB_FULL(cb) (CB_SIZE(cb) == (cb)->capacity)
+#define CB_CAPACITY(cb) ((cb)->capacity)
+#define CB_FULL(cb) (CB_SIZE(cb) == CB_CAPACITY(cb))
 #define CB_EMPTY(cb) (CB_SIZE(cb) == 0)
+#define CB_REMAINING(cb) (CB_CAPACITY(cb) - CB_SIZE(cb))
 
 void CbInit(CircularBuffer* target, unsigned char* buffer, uint16_t bytes_count);
 

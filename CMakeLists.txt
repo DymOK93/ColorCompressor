@@ -19,7 +19,8 @@ set(BASIC_COMPILE_OPTIONS
 
 set(OPT_COMPILE_OPTIONS
         $<$<CONFIG:Debug>:-O0 -g3>
-        $<$<CONFIG:Release>:-O3 -flto>)
+       #$<$<CONFIG:Release>:-O3 -flto>)
+        $<$<CONFIG:Release>:-O1 -g3>)
 
 set(BASIC_LINK_OPTIONS
         ${ARCHITECTURE_SPECIFIC_OPTIONS}
@@ -39,6 +40,7 @@ add_baremetal_executable(ColorCompressor
         "color.c"
         "command.h"
         "command.c"
+        "main.h"
         "main.c"
         "packet.h"
         "receiver.h"
