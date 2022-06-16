@@ -26,8 +26,12 @@ int main(void)
 
 	for (;;)
 	{
-		if (CbConsumeOne(&g_cb, &header) && PACKET_VALID(header))
+		if (CbConsumeOne(&g_cb, &header))
 		{
+			if (!PACKET_VALID(header))
+			{
+				continue;
+			}
 			bytes_unprocessed = ProcessNextPacket(buffer, sizeof buffer, bytes_unprocessed, header);
 		}
 	}
@@ -61,9 +65,11 @@ uint16_t ProcessNextPacket(unsigned char* buffer, uint16_t buffer_size, uint16_t
 
 uint16_t ProcessCommands(const uint8_t* data, uint16_t count)
 {
-	while (count--)
+	uint16_t idx;
+
+	for (idx = 0; idx < count; ++idx)
 	{
-		CmdExecute(*data++);
+		CmdExecute(data[idx]);
 	}
 	return count;
 }
@@ -71,12 +77,14 @@ uint16_t ProcessCommands(const uint8_t* data, uint16_t count)
 uint16_t ProcessData(const unsigned char* data, uint16_t count)
 {
 	const Bgr888* colors = (const Bgr888*)data;
-	uint16_t pos, idx;
+	uint16_t pos = 0, idx = 0;
 	Rgb666 converted_colors[PACKET_MAX_SIZE / sizeof(Bgr888)];
 
-	for (pos = 0, idx = 0; pos < count; pos += sizeof(Bgr888), ++idx)
+	while (pos + sizeof(Bgr888) <= count)
 	{
 		converted_colors[idx] = ColorCompress(colors[idx]);
+		++idx;
+		pos += sizeof(Bgr888);
 	}
 	TrmSendData(converted_colors, idx * sizeof(Rgb666));
 	return pos;
