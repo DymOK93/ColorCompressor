@@ -9,13 +9,12 @@ typedef struct
 	uint16_t capacity;
 	volatile uint16_t head;
 	volatile uint16_t tail;
-	volatile uint16_t size;
 } CircularBuffer;
 
 #define CB_SIZE(cb) ((cb)->size)
 #define CB_CAPACITY(cb) ((cb)->capacity)
-#define CB_FULL(cb) (CB_SIZE(cb) == CB_CAPACITY(cb))
-#define CB_EMPTY(cb) (CB_SIZE(cb) == 0)
+#define CB_FULL(cb) ((cb)->tail + 1 == (cb)->head)
+#define CB_EMPTY(cb) ((cb)->head == (cb)->tail)
 #define CB_REMAINING(cb) (CB_CAPACITY(cb) - CB_SIZE(cb))
 
 void CbInit(CircularBuffer* target, unsigned char* buffer, uint16_t bytes_count);

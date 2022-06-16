@@ -10,6 +10,19 @@ typedef struct
 
 static Receiver g_receiver;
 
+static void RcvpReply(uint8_t overwrite)
+{
+	if (!overwrite)
+	{
+		GPIOB->ODR |= GPIO_ODR_9;   // CTS signal
+	}
+	else
+	{
+		GPIOB->ODR |= GPIO_ODR_10;  // Overwrite signal
+	}
+	EXTI->PR |= EXTI_PR_PR8;  // Clear before setting CTS/OV
+}
+
 void RcvInit(void)
 {
 	RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
@@ -41,14 +54,5 @@ void EXTI4_15_IRQHandler(void)
 	CircularBuffer* cb = g_receiver.cb;
 
 	GPIOB->ODR &= ~(GPIO_ODR_9 | GPIO_ODR_10);
-	EXTI->PR |= EXTI_PR_PR8;  // Clear before setting CTS/OV
-
-	if (!CbProduceOne(cb, (uint8_t)GPIOB->IDR) && g_receiver.flags & RCV_FLAG_RETRY_IF_OVERWRITE)
-	{
-		GPIOB->ODR |= GPIO_ODR_10;  // Overwrite signal
-	}
-	else
-	{
-		GPIOB->ODR |= GPIO_ODR_9;   // CTS signal
-	}
+	RcvpReply(!CbProduceOne(cb, (uint8_t)GPIOB->IDR) && g_receiver.flags & RCV_FLAG_RETRY_IF_OVERWRITE);
 }

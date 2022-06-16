@@ -11,60 +11,77 @@ void CbInit(CircularBuffer* target, unsigned char* buffer, uint16_t bytes_count)
 	target->capacity = bytes_count;
 	target->head = 0;
 	target->tail = 0;
-	target->size = 0;
 }
 
-static void CbpConsume(CircularBuffer* cb, unsigned char* dst, uint16_t bytes_count)
+static uint16_t CbpConsume(CircularBuffer* cb, unsigned char* dst, uint16_t bytes_count)
 {
 	const uint16_t head = cb->head, tail = cb->tail;
-	uint16_t delta;
+	uint16_t delta, bytes_read;
 
-	if (head < tail || CB_CAPACITY(cb) - head > bytes_count) {
-		memcpy(dst, cb->storage + head, bytes_count);
-		cb->head += bytes_count;
+	if (head == tail)
+	{
+		bytes_read = 0;
+	}
+	else if (head < tail)
+	{
+		bytes_read = MIN(bytes_count, tail - head);
+		memcpy(dst, cb->storage + head, bytes_read);
+		cb->head += bytes_read;
+	}
+	else if (CB_CAPACITY(cb) - head > bytes_count)
+	{
+		bytes_read = bytes_count;
+		memcpy(dst, cb->storage + head, bytes_read);
+		cb->head += bytes_read;
 	}
 	else
 	{
 		delta = CB_CAPACITY(cb) - head;
 		memcpy(dst, cb->storage + head, delta);
-		bytes_count -= delta;
-		memcpy(dst + delta, cb->storage, bytes_count);
-		cb->head = bytes_count;
+		bytes_read = MIN(bytes_count - delta, tail);
+		memcpy(dst + delta, cb->storage, bytes_read);
+		cb->head = bytes_read;
+		bytes_read += delta;
 	}
+	return bytes_read;
 }
 
-static void CbpProduce(CircularBuffer* cb, const unsigned char* src, uint16_t bytes_count)
+static uint16_t CbpProduce(CircularBuffer* cb, const unsigned char* src, uint16_t bytes_count)
 {
 	const uint16_t head = cb->head, tail = cb->tail;
-	uint16_t delta;
+	uint16_t delta, bytes_written;
 
-	if (tail < head || CB_CAPACITY(cb) - tail > bytes_count)
+	if (tail < head)
 	{
-		memcpy(cb->storage + tail, src, bytes_count);
-		cb->tail += bytes_count;
+		bytes_written = MIN(bytes_count, head - tail);
+		memcpy(cb->storage + tail, src, bytes_written);
+		cb->tail += bytes_written;
+	}
+	else if (CB_CAPACITY(cb) - tail > bytes_count)
+	{
+		bytes_written = bytes_count;
+		memcpy(cb->storage + tail, src, bytes_written);
+		cb->tail += bytes_written;
 	}
 	else
 	{
 		delta = CB_CAPACITY(cb) - tail;
 		memcpy(cb->storage + tail, src, delta);
-		bytes_count -= delta;
-		memcpy(cb->storage, src + delta, bytes_count);
-		cb->tail = bytes_count;
+		bytes_written = MIN(bytes_count - delta, head);
+		memcpy(cb->storage, src + delta, bytes_written);
+		cb->tail = bytes_written;
+		bytes_written += delta;
 	}
+	return bytes_written;
 }
 
 uint16_t CbProduce(CircularBuffer* cb, const unsigned char* src, uint16_t bytes_count)
 {
-	uint16_t bytes_written;
-
-	if (bytes_count == 0 || CB_FULL(cb))
+	if (bytes_count == 0)
 	{
 		return 0;
 	}
-	bytes_written = MIN(bytes_count, CB_REMAINING(cb));
-	cb->size += bytes_written;
-	CbpProduce(cb, src, bytes_written);
-	return bytes_written;
+	return CbpProduce(cb, src, bytes_count);
 }
 
 uint16_t CbProduceOne(CircularBuffer* cb, unsigned char value)
@@ -74,16 +91,11 @@ uint16_t CbProduceOne(CircularBuffer* cb, unsigned char value)
 
 uint16_t CbConsume(CircularBuffer* cb, unsigned char* dst, uint16_t bytes_count)
 {
-	uint16_t bytes_read;
-
-	if (bytes_count == 0 || CB_EMPTY(cb))
+	if (bytes_count == 0)
 	{
 		return 0;
 	}
-	bytes_read = MIN(bytes_count, CB_SIZE(cb));
-	cb->size -= bytes_read;
-	CbpConsume(cb, dst, bytes_read);
-	return bytes_read;
+	return CbpConsume(cb, dst, bytes_count);
 }
 
 uint16_t CbConsumeOne(CircularBuffer* cb, unsigned char* value)
@@ -93,6 +105,10 @@ uint16_t CbConsumeOne(CircularBuffer* cb, unsigned char* value)
 
 void CbConsumeBlocking(CircularBuffer* cb, unsigned char* dst, uint16_t bytes_count)
 {
-	while (CB_SIZE(cb) < bytes_count) {}
-	CbConsume(cb, dst, bytes_count);
+	while (bytes_count > 0)
+	{
+		bytes_count -= CbConsume(cb, dst, bytes_count);
+	}
 }
+
+

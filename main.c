@@ -9,35 +9,41 @@
 #include <string.h>
 
 static unsigned char g_cb_data[6144];
-static CircularBuffer g_cb;
 
 int main(void)
 {
 	uint8_t header;
 	uint16_t bytes_unprocessed = 0;
+	
+	CircularBuffer cb;
 	unsigned char buffer[PACKET_MAX_SIZE];
 
 	CmdInit();
 	RcvInit();
 	TrmInit();
-	CbInit(&g_cb, g_cb_data, sizeof g_cb_data);
-	RcvListen(&g_cb, RCV_FLAG_RETRY_IF_OVERWRITE);
+	CbInit(&cb, g_cb_data, sizeof g_cb_data);
+	RcvListen(&cb, RCV_FLAG_RETRY_IF_OVERWRITE);
 	CmdListen();
 
 	for (;;)
 	{
-		if (CbConsumeOne(&g_cb, &header))
+		if (CbConsumeOne(&cb, &header))
 		{
 			if (!PACKET_VALID(header))
 			{
 				continue;
 			}
-			bytes_unprocessed = ProcessNextPacket(buffer, sizeof buffer, bytes_unprocessed, header);
+			bytes_unprocessed = ProcessNextPacket(&cb, buffer, sizeof buffer, bytes_unprocessed, header);
 		}
 	}
 }
 
-uint16_t ProcessNextPacket(unsigned char* buffer, uint16_t buffer_size, uint16_t bytes_unprocessed, uint8_t header)
+uint16_t ProcessNextPacket(
+	CircularBuffer* cb,
+	unsigned char* buffer,
+	uint16_t buffer_size,
+	uint16_t bytes_unprocessed,
+	uint8_t header)
 {
 	uint16_t packet_size = PACKET_SIZE(header);
 	uint16_t bytes_read, bytes_available;
@@ -47,7 +53,7 @@ uint16_t ProcessNextPacket(unsigned char* buffer, uint16_t buffer_size, uint16_t
 		bytes_available = buffer_size - bytes_unprocessed;
 		memmove(buffer, buffer + bytes_available, bytes_unprocessed); // Shift unprocessed bytes left
 		bytes_read = MIN(packet_size, bytes_available);
-		CbConsumeBlocking(&g_cb, buffer + bytes_unprocessed, bytes_read);
+		CbConsumeBlocking(cb, buffer + bytes_unprocessed, bytes_read);
 		packet_size -= bytes_read;
 		bytes_unprocessed += bytes_read;
 
@@ -59,6 +65,10 @@ uint16_t ProcessNextPacket(unsigned char* buffer, uint16_t buffer_size, uint16_t
 		{
 			bytes_unprocessed -= ProcessCommands(buffer, bytes_unprocessed);
 		}
+	}
+	if (bytes_unprocessed > 2)
+	{
+		return bytes_unprocessed;
 	}
 	return bytes_unprocessed;
 }
