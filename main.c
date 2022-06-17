@@ -14,6 +14,7 @@ int main(void)
 {
 	uint8_t header;
 	uint16_t bytes_unprocessed = 0;
+	uint16_t bytes_processed = 0;
 	
 	CircularBuffer cb;
 	unsigned char buffer[PACKET_MAX_SIZE];
@@ -27,13 +28,11 @@ int main(void)
 
 	for (;;)
 	{
-		if (CbConsumeOne(&cb, &header))
+		if (CbConsumeOne(&cb, &header) && PACKET_VALID(header))
 		{
-			if (!PACKET_VALID(header))
-			{
-				continue;
-			}
+			bytes_processed += PACKET_SIZE(header);
 			bytes_unprocessed = ProcessNextPacket(&cb, buffer, sizeof buffer, bytes_unprocessed, header);
+			bytes_processed -= bytes_unprocessed;
 		}
 	}
 }
