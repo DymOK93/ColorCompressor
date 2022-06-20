@@ -30,5 +30,3 @@ target_include_directories(ColorCompressor PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(ColorCompressor PRIVATE stm32::f051r8)
-
-
