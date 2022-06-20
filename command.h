@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 
-#define CMD_GREEN_LED_ON 0x1 
+#define CMD_GREEN_LED_ON 0x1
 #define CMD_GREEN_LED_OFF 0x2
 #define CMD_GREEN_LED_TOGGLE (CMD_GREEN_LED_ON | CMD_GREEN_LED_OFF)
 #define CMD_BLUE_LED_ON 0x4

@@ -6,8 +6,8 @@
 #define PACKET_MIN_SIZE 1
 #define PACKET_MAX_SIZE 64
 
-#define PACKET_HEADER(type, size) ((type) << 6 | ((size) - 1))
+#define PACKET_HEADER(type, size) ((type) << 6 | ((size)-1))
 #define PACKET_DATA(header) ((header) >> 6 == PACKET_TYPE_DATA)
-#define PACKET_COMMAND(header)  ((header) >> 6 == PACKET_TYPE_COMMAND)
-#define PACKET_VALID(header)  (PACKET_DATA(header) || PACKET_COMMAND(header))
-#define PACKET_SIZE(header) (((header) & 0x3F) + 1)
+#define PACKET_COMMAND(header) ((header) >> 6 == PACKET_TYPE_COMMAND)
+#define PACKET_VALID(header) (PACKET_DATA(header) || PACKET_COMMAND(header))
+#define PACKET_SIZE(header) (((header)&0x3F) + 1)
