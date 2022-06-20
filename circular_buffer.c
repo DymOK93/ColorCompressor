@@ -1,6 +1,5 @@
 #include "circular_buffer.h"
 
-#include <assert.h>
 #include <string.h>
 
 #include "stm32f0xx.h"

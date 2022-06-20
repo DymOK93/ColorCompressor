@@ -11,11 +11,9 @@ static unsigned char g_cb_data[6144];
 
 int main(void) {
   uint8_t header;
-  uint16_t bytes_unprocessed = 0;
-  uint16_t bytes_processed = 0;
-
   CircularBuffer cb;
-  unsigned char buffer[PACKET_MAX_SIZE];
+  Storage data = {.handler = &ProcessData};
+  Storage commands = {.handler = &ProcessCommands};
 
   CmdInit();
   RcvInit();
@@ -25,57 +23,54 @@ int main(void) {
   CmdListen();
 
   for (;;) {
-    if (CbConsumeOne(&cb, &header) && PACKET_VALID(header)) {
-      bytes_processed += PACKET_SIZE(header);
-      // bytes_unprocessed = ProcessNextPacket(&cb, buffer, sizeof buffer,
-      // bytes_unprocessed, header);
-      bytes_processed -= bytes_unprocessed;
+    if (CbConsumeOne(&cb, &header)) {
+      if (PACKET_DATA(header)) {
+        ProcessNextPacket(&cb, &data, PACKET_SIZE(header));
+      } else if (PACKET_COMMAND(header)) {
+        ProcessNextPacket(&cb, &commands, PACKET_SIZE(header));
+      }
     }
   }
 }
 
-uint16_t ProcessNextPacket(CircularBuffer* cb,
-                           Storage* storage,
-                           uint16_t packet_size) {
-  // uint16_t packet_size = PACKET_SIZE(header);
-  // uint16_t bytes_read, bytes_available;
+void ProcessNextPacket(CircularBuffer* cb,
+                       Storage* storage,
+                       uint16_t packet_size) {
+  uint16_t bytes_available, chunk_size, bytes_processed;
 
-  // while (packet_size > 0)
-  //{
-  //	bytes_available = buffer_size - bytes_unprocessed;
-  //	memmove(buffer, buffer + bytes_available, bytes_unprocessed); // Shift
-  // unprocessed bytes left 	bytes_read = MIN(packet_size, bytes_available);
-  //	CbConsumeBlocking(cb, buffer + bytes_unprocessed, bytes_read);
-  //	packet_size -= bytes_read;
-  //	bytes_unprocessed += bytes_read;
-
-  //	if (PACKET_DATA(header))
-  //	{
-  //		bytes_unprocessed -= ProcessData(buffer, bytes_unprocessed);
-  //	}
-  //	else
-  //	{
-  //		bytes_unprocessed -= ProcessCommands(buffer, bytes_unprocessed);
-  //	}
-  //}
-  // return bytes_unprocessed;
+  for (;;) {
+    bytes_available = TMP_BUFFER_SIZE - storage->bytes_unprocessed;
+    memmove(storage->buffer, storage->buffer + bytes_available,
+            storage->bytes_unprocessed);  // Shifting unprocessed bytes left
+    chunk_size = MIN(packet_size, TMP_BUFFER_SIZE - storage->bytes_unprocessed);
+    if (chunk_size) {
+      CbConsumeBlocking(cb, storage->buffer + storage->bytes_unprocessed,
+                        chunk_size);
+      storage->bytes_unprocessed += chunk_size;
+    }
+    bytes_processed = storage->handler(storage->buffer, storage->bytes_unprocessed);
+    storage->bytes_unprocessed -= bytes_processed;
+    if (!bytes_processed) {
+      break;
+    }
+  }
 }
 
-uint16_t ProcessCommands(const unsigned char* data, uint16_t count) {
+uint16_t ProcessCommands(const unsigned char* data, uint16_t bytes_count) {
   uint16_t idx;
 
-  for (idx = 0; idx < count; ++idx) {
+  for (idx = 0; idx < bytes_count; ++idx) {
     CmdExecute(data[idx]);
   }
-  return count;
+  return bytes_count;
 }
 
-uint16_t ProcessData(const unsigned char* data, uint16_t count) {
+uint16_t ProcessData(const unsigned char* data, uint16_t bytes_count) {
   const Bgr888* colors = (const Bgr888*)data;
   uint16_t pos = 0, idx = 0;
   Rgb666 converted_colors[PACKET_MAX_SIZE / sizeof(Bgr888)];
 
-  while (pos + sizeof(Bgr888) <= count) {
+  while (pos + sizeof(Bgr888) <= bytes_count) {
     converted_colors[idx] = ColorCompress(colors[idx]);
     ++idx;
     pos += sizeof(Bgr888);
