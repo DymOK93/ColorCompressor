@@ -1,8 +1,8 @@
 #include "circular_buffer.h"
 
-#include <string.h>
+#include <stm32f0xx.h>
 
-#include "stm32f0xx.h"
+#include <string.h>
 
 void CbInit(CircularBuffer* target,
             unsigned char* buffer,

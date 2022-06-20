@@ -1,7 +1,7 @@
 #include "command.h"
 #include "transmitter.h"
 
-#include "stm32f0xx.h"
+#include <stm32f0xx.h>
 
 void CmdInit(void) {
   RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOCEN;

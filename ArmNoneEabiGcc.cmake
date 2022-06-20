@@ -1,6 +1,3 @@
-# Redistribution and use is allowed under the MIT license.
-# Copyright (c) 2022 Dmitry Bolshakov. All rights reserved.
-
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR ARM)
 
@@ -13,10 +10,9 @@ elseif(UNIX OR APPLE)
 endif()
 
 execute_process(
-  COMMAND ${BINUTILS_SEARCH_CMD} "${TOOLCHAIN_PREFIX}gcc"
-  OUTPUT_VARIABLE GCC_PATH
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+    COMMAND ${BINUTILS_SEARCH_CMD} "${TOOLCHAIN_PREFIX}gcc"
+    OUTPUT_VARIABLE GCC_PATH
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 get_filename_component(ARM_BINUTILS_DIR ${GCC_PATH} DIRECTORY)
 find_program(CMAKE_ASM_COMPILER NAMES "${CMAKE_C_COMPILER}")

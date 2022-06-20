@@ -1,6 +1,6 @@
 #include "receiver.h"
 
-#include "stm32f0xx.h"
+#include <stm32f0xx.h>
 
 typedef struct {
   CircularBuffer* cb;

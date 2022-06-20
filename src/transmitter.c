@@ -1,10 +1,10 @@
 #include "transmitter.h"
 #include "packet.h"
 
+#include <stm32f0xx.h>
+
 #include <stdint.h>
 #include <string.h>
-
-#include "stm32f0xx.h"
 
 typedef struct {
   volatile uint8_t active_transfer;
