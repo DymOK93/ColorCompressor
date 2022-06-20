@@ -19,8 +19,7 @@ set(BASIC_COMPILE_OPTIONS
         -Wall -Wextra -Wpedantic 
         -Wduplicated-branches -Wduplicated-cond 
         -Wlogical-op
-        -Wcast-qual 
-        #-Wconversion -Wsign-conversion
+        -Wcast-qual
         -Werror)
 
 set(BUILD_TYPE_SPECIFIC_COMPILE_OPTIONS

@@ -42,13 +42,15 @@ void ProcessNextPacket(CircularBuffer* cb,
     bytes_available = TMP_BUFFER_SIZE - storage->bytes_unprocessed;
     memmove(storage->buffer, storage->buffer + bytes_available,
             storage->bytes_unprocessed);  // Shifting unprocessed bytes left
-    chunk_size = MIN(packet_size, TMP_BUFFER_SIZE - storage->bytes_unprocessed);
+    chunk_size = (uint16_t)MIN(packet_size,
+                               TMP_BUFFER_SIZE - storage->bytes_unprocessed);
     if (chunk_size) {
       CbConsumeBlocking(cb, storage->buffer + storage->bytes_unprocessed,
                         chunk_size);
       storage->bytes_unprocessed += chunk_size;
     }
-    bytes_processed = storage->handler(storage->buffer, storage->bytes_unprocessed);
+    bytes_processed =
+        storage->handler(storage->buffer, storage->bytes_unprocessed);
     storage->bytes_unprocessed -= bytes_processed;
     if (!bytes_processed) {
       break;
@@ -73,8 +75,8 @@ uint16_t ProcessData(const unsigned char* data, uint16_t bytes_count) {
   while (pos + sizeof(Bgr888) <= bytes_count) {
     converted_colors[idx] = ColorCompress(colors[idx]);
     ++idx;
-    pos += sizeof(Bgr888);
+    pos += (uint16_t)sizeof(Bgr888);
   }
-  TrmSendData(converted_colors, idx * sizeof(Rgb666));
+  TrmSendData(converted_colors, (uint16_t)(idx * sizeof(Rgb666)));
   return pos;
 }

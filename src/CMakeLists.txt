@@ -17,7 +17,7 @@ target_compile_features(ColorCompressor PUBLIC c_std_99)
 
 target_compile_options(ColorCompressor PRIVATE
         ${BASIC_COMPILE_OPTIONS}
-        ${UILD_TYPE_SPECIFIC_COMPILE_OPTIONS})
+        ${BUILD_TYPE_SPECIFIC_COMPILE_OPTIONS})
 
 target_link_options(ColorCompressor PRIVATE
         -T ${LINKER_SCRIPT}
