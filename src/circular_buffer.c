@@ -22,17 +22,17 @@ static uint16_t CbpConsume(CircularBuffer* cb,
   if (head == tail) {
     bytes_read = 0;
   } else if (head < tail) {
-    bytes_read = MIN(bytes_count, tail - head);
+    bytes_read = (uint16_t)MIN(bytes_count, tail - head);
     memcpy(dst, cb->storage + head, bytes_read);
     cb->head += bytes_read;
-  } else if (CB_CAPACITY(cb) - head > bytes_count) {
+  } else if ((uint16_t)(CB_CAPACITY(cb) - head) > bytes_count) {
     bytes_read = bytes_count;
     memcpy(dst, cb->storage + head, bytes_read);
     cb->head += bytes_read;
   } else {
     delta = CB_CAPACITY(cb) - head;
     memcpy(dst, cb->storage + head, delta);
-    bytes_read = MIN(bytes_count - delta, tail);
+    bytes_read = (uint16_t)MIN(bytes_count - delta, tail);
     memcpy(dst + delta, cb->storage, bytes_read);
     cb->head = bytes_read;
     bytes_read += delta;
@@ -47,17 +47,17 @@ static uint16_t CbpProduce(CircularBuffer* cb,
   uint16_t delta, bytes_written;
 
   if (tail < head) {
-    bytes_written = MIN(bytes_count, head - tail);
+    bytes_written = (uint16_t)MIN(bytes_count, head - tail);
     memcpy(cb->storage + tail, src, bytes_written);
     cb->tail += bytes_written;
-  } else if (CB_CAPACITY(cb) - tail > bytes_count) {
+  } else if ((uint16_t)(CB_CAPACITY(cb) - tail) > bytes_count) {
     bytes_written = bytes_count;
     memcpy(cb->storage + tail, src, bytes_written);
     cb->tail += bytes_written;
   } else {
-    delta = CB_CAPACITY(cb) - tail;
+    delta = (uint16_t)(CB_CAPACITY(cb) - tail);
     memcpy(cb->storage + tail, src, delta);
-    bytes_written = MIN(bytes_count - delta, head);
+    bytes_written = (uint16_t)MIN(bytes_count - delta, head);
     memcpy(cb->storage, src + delta, bytes_written);
     cb->tail = bytes_written;
     bytes_written += delta;

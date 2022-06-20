@@ -3,7 +3,7 @@ project(ColorCompressor)
 enable_language(C ASM)
 
 set(CC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-list(APPEND CMAKE_MODULE_PATH "${CC_DIR}/tools/cmake")
+set(CMAKE_TOOLCHAIN_FILE "${CC_DIR}/tools/cmake/ArmNoneEabiGcc.cmake")
 set(LINKER_SCRIPT "${CC_DIR}/tools/link/STM32F051R8_FLASH.lds")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CC_DIR}/build")
 
@@ -19,8 +19,7 @@ set(BASIC_COMPILE_OPTIONS
         -Wall -Wextra -Wpedantic 
         -Wduplicated-branches -Wduplicated-cond 
         -Wlogical-op
-        -Wcast-qual 
-        #-Wconversion -Wsign-conversion
+        -Wcast-qual
         -Werror)
 
 set(BUILD_TYPE_SPECIFIC_COMPILE_OPTIONS

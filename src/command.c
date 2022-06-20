@@ -15,7 +15,7 @@ void CmdExecute(uint8_t command) {
       GPIOC->ODR |= GPIO_ODR_8;
       break;
     case CMD_GREEN_LED_OFF:
-      GPIOC->ODR &= ~GPIO_ODR_8;
+      GPIOC->ODR &= (uint16_t)~GPIO_ODR_8;
       break;
     case CMD_GREEN_LED_TOGGLE:
       GPIOC->ODR ^= GPIO_ODR_8;
@@ -24,7 +24,7 @@ void CmdExecute(uint8_t command) {
       GPIOC->ODR |= GPIO_ODR_9;
       break;
     case CMD_BLUE_LED_OFF:
-      GPIOC->ODR &= ~GPIO_ODR_9;
+      GPIOC->ODR &= (uint16_t)~GPIO_ODR_9;
       break;
     case CMD_BLUE_LED_TOGGLE:
       GPIOC->ODR ^= GPIO_ODR_9;

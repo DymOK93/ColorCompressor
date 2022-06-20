@@ -49,7 +49,7 @@ void RcvListen(CircularBuffer* cb, int flags) {
 void EXTI4_15_IRQHandler(void) {
   CircularBuffer* cb = g_receiver.cb;
 
-  GPIOB->ODR &= ~(GPIO_ODR_9 | GPIO_ODR_10);
+  GPIOB->ODR &= (uint16_t)~(GPIO_ODR_9 | GPIO_ODR_10);
   RcvpReply(!CbProduceOne(cb, (uint8_t)GPIOB->IDR) &&
             g_receiver.flags & RCV_FLAG_RETRY_IF_OVERWRITE);
 }
