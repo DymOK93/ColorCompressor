@@ -76,7 +76,7 @@ void TrmInit(void) {
   NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
 
   RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-  USART1->BRR |= 69;  // 115200
+  USART1->BRR |= SystemCoreClock / TRM_USART_SPEED;
   USART1->CR3 |= USART_CR3_DMAT;
   USART1->CR1 |= USART_CR1_TE | USART_CR1_UE;
 }
