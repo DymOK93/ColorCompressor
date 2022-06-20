@@ -21,7 +21,8 @@ target_compile_options(stm32_f051r8 PUBLIC
         ${BUILD_TYPE_SPECIFIC_COMPILE_OPTIONS})
 
 target_link_options(stm32_f051r8 PUBLIC
-        ${BASIC_LINK_OPTIONS})
+        ${BASIC_LINK_OPTIONS}
+        -u "_init")
 
 target_include_directories(stm32_f051r8 PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR})

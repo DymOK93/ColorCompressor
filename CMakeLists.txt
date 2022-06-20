@@ -34,6 +34,7 @@ set(BASIC_LINK_OPTIONS
         -specs=nano.specs
         -lc -lm -lnosys)
 
+add_subdirectory(external)
 add_subdirectory(src)
 
 

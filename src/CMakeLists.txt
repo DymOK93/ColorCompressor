@@ -1,5 +1,3 @@
-add_subdirectory(stm32)
-
 add_baremetal_executable(ColorCompressor  
         "circular_buffer.h"
         "circular_buffer.c"
