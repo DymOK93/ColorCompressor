@@ -1,12 +1,12 @@
-add_library(stm32_f051r8 STATIC 
-        "core_cm0.h"
-	    "core_cmInstr.h"
-	    "core_cmFunc.h"
-        "stm32f0xx.h"
-        "system_stm32f0xx.h"
-        "init.c"
-        "startup_stm32f051x8.s"
-        "system_stm32f0xx.c")
+add_library(stm32_f051r8 STATIC)
+
+target_sources(stm32_f051r8
+        PUBLIC
+            "${CMAKE_CURRENT_LIST_DIR}/include"
+        PRIVATE
+            "src/init.c"
+            "src/system_stm32f0xx.c"
+            "src/startup_stm32f051x8.s")
 
 add_library(stm32::f051r8 ALIAS stm32_f051r8)
 
@@ -24,5 +24,5 @@ target_link_options(stm32_f051r8 PUBLIC
         ${BASIC_LINK_OPTIONS}
         -u "_init")
 
-target_include_directories(stm32_f051r8 PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(stm32_f051r8 PUBLIC 
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
