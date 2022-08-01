@@ -14,27 +14,26 @@ typedef struct {
 #define TRM_REQUEST_HEADER(trm) ((trm)->request[0])
 #define TRM_REQUEST_BODY(trm) ((trm)->request + 1)
 
+#define ATOMIC_CMPXCHG(flag, expected, desired, result) \
+  do {                                                  \
+    __disable_irq();                                    \
+    *(result) = *(flag);                                \
+    if (*(result) == (expected)) {                      \
+      *(flag) = desired;                                \
+    }                                                   \
+    __enable_irq();                                     \
+  } while (0)
+
 static Transmitter g_transmitter = {0};
 
-static int TrmpCompareExchangeFlag(volatile uint8_t* flag,
-                                   uint8_t expected,
-                                   uint8_t desired) {
+static void TrmpRestartTransfer(void) {
   uint8_t value;
 
-  __disable_irq();
-  value = *flag;
-  if (value == expected) {
-    *flag = desired;
-  }
-  __enable_irq();
-  return value;
-}
-
-static void TrmpRestartTransfer(void) {
   for (;;) {
     while (g_transmitter.active_transfer != 0)
       ;
-    if (TrmpCompareExchangeFlag(&g_transmitter.active_transfer, 0, 1) == 0) {
+    ATOMIC_CMPXCHG(&g_transmitter.active_transfer, 0, 1, &value);
+    if (value == 0) {
       break;
     }
   }
