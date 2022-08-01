@@ -7,7 +7,7 @@ typedef struct {
   int flags;
 } Receiver;
 
-static Receiver g_receiver;
+static Receiver g_receiver = {0};
 
 static void RcvpReply(uint8_t overwrite) {
   if (!overwrite) {

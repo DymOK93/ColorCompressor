@@ -7,7 +7,7 @@
 
 #include <string.h>
 
-static unsigned char g_cb_data[6144];
+static unsigned char g_cb_data[6144] = {0};
 
 int main(void) {
   uint8_t header;
